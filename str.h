@@ -1,5 +1,5 @@
-#ifndef MTTSTR_H
-#define MTTSTR_H
+#ifndef MTT_STR_H
+#define MTT_STR_H
 
 #include <stddef.h>
 #include <limits.h>

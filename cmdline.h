@@ -1,5 +1,5 @@
-#ifndef CMDLINE_H
-#define CMDLINE_H
+#ifndef MTT_CMDLINE_H
+#define MTT_CMDLINE_H
 
 #include <stddef.h>
 
