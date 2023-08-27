@@ -34,7 +34,7 @@ char *mtt_file_load(const char *name, long off, size_t count, size_t *size, int 
 
 				if (str) cont[count] = 0;
 
-				if (size) *size = s;
+				if (size) *size = count;
 
 				return cont;
 			}
