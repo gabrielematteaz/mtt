@@ -1,5 +1,5 @@
 # mtt
-The "mtt" library
+My personal C library
 
 # Libraries
 - cmdline
