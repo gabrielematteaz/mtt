@@ -1,49 +1,68 @@
 #include "file.h"
 
-char *mtt_file_load(const char *name, long off, size_t count, size_t *size, int str)
+char *mtt_load_file_into_new_buf(const char *name, size_t off, size_t c, size_t *size, int str)
 {
-	FILE* file = fopen(name, "rb");
-
-	if (file)
-	{
-		size_t s;
+	HANDLE file = CreateFileA(name, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	
-		if (count == 0)
-		{
-			fseek(file, 0, SEEK_END);
-			s = ftell(file);
-			count = s;
+	if (file == INVALID_HANDLE_VALUE) goto error;
 
-			if (str) s++;
-		}
-		else
-		{
-			s = count;
+	if (c == 0) GetFileSizeEx(file, (PLARGE_INTEGER)&c);
 
-			if (str) count--;
-		}
+	size_t s = c;
+	char *cont;
 
-		char *cont = malloc(s);
+	if (str)
+	{
+		s++;
+		cont = malloc(s);
 
 		if (cont)
 		{
-			if (fseek(file, off, SEEK_SET) == 0)
+			OVERLAPPED overl;
+
+			ZeroMemory(&overl, sizeof(overl));
+			overl.Offset = off;
+			overl.OffsetHigh = off >> 32;
+
+			if (ReadFileEx(file, cont, c, &overl, NULL) == TRUE)
 			{
-				count = fread(cont, 1, count, file);
-				fclose(file);
+				if (size) *size = overl.OffsetHigh;
 
-				if (str) cont[count] = 0;
-
-				if (size) *size = count;
+				CloseHandle(file);
+				cont[overl.OffsetHigh] = 0;
 
 				return cont;
 			}
-
-			free(cont);
 		}
-
-		fclose(file);
 	}
+	else
+	{
+		cont = malloc(s);
+
+		if (cont)
+		{
+			OVERLAPPED overl;
+
+			ZeroMemory(&overl, sizeof(overl));
+			overl.Offset = off;
+			overl.OffsetHigh = off >> 32;
+
+			if (ReadFileEx(file, cont, c, &overl, NULL) == TRUE)
+			{
+				if (size) *size = overl.OffsetHigh;
+
+				CloseHandle(file);
+
+				return cont;
+			}			
+		}
+	}
+
+	CloseHandle(file);
+	free(cont);
+
+error:
+	if (size) *size = 0;
 
 	return NULL;
 }

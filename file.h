@@ -1,9 +1,8 @@
 #ifndef MTT_FILE_H
 #define MTT_FILE_H
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <Windows.h>
 
-char *mtt_file_load(const char *name, long off, size_t count, size_t *size, int str);
+char *mtt_load_file_into_new_buf(const char *name, size_t off, size_t c, size_t *size, int str);
 
 #endif
