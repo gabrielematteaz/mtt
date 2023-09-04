@@ -30,7 +30,9 @@ int mtt_extr_optv(int argc, char *argv[], int optc, struct mtt_opt_t *optv)
 
 						while (ov < ovc)
 						{
-							if (ac == ov->alias)
+							char alias = ov->alias;
+
+							if (alias && ac == alias)
 							{
 								int fs = ov->fs;
 
