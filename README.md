@@ -2,5 +2,5 @@
 My personal C library
 
 # Libraries
-- cmdline
+- cmd_line
 - str
