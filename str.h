@@ -3,13 +3,13 @@
 
 #include <stddef.h>
 
-#define FMT_FS_FILL_MODE_LEFT 0x00
-#define FMT_FS_FILL_MODE_INTERNAL 0x01
-#define FMT_FS_FILL_MODE_RIGHT 0x02
+#define FMT_FS_LEFT_FILL 0x00
+#define FMT_FS_INTERNAL_FILL 0x01
+#define FMT_FS_RIGHT_FILL 0x02
 
-#define FMT_FS_LTR_CASE_MIXED 0x00
-#define FMT_FS_LTR_CASE_UPPER 0x04
-#define FMT_FS_LTR_CASE_LOWER 0x0C
+#define FMT_FS_UNK_CASE 0x00
+#define FMT_FS_UPPERCASE 0x04
+#define FMT_FS_LOWERCASE 0x0C
 
 #define FMT_FS_NO_NULL_TERM 0x10
 
@@ -19,7 +19,7 @@ struct mtt_fmt_t
 	char minus;
 	char fill;
 	char base;
-	char fs;
+	int fs;
 	size_t width;
 };
 

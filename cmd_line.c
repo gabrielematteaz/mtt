@@ -6,16 +6,16 @@ int mtt_extr_optv(int argc, char *argv[], int optc, struct mtt_opt_t *optv)
 {
 	if (argv == NULL || optv == NULL) return 0;
 
-	char **av = argv + 1, **avc = argv + argc;
-	struct mtt_opt_t *ovc = optv + optc;
+	char **av = argv + 1, **avc = argv + argc, *arg, *a, ac;
+	struct mtt_opt_t *ov, *ovc = optv + optc;
 
 	while (av < avc)
 	{
-		char *arg = *av;
+		arg = *av;
 
 		if (*arg == '-')
 		{
-			char *a = arg + 1, ac = *a;
+			a = arg + 1, ac = *a;
 
 			if (ac)
 			{
@@ -24,21 +24,23 @@ int mtt_extr_optv(int argc, char *argv[], int optc, struct mtt_opt_t *optv)
 				{
 					do
 					{
-						struct mtt_opt_t *ov = optv;
-
-						a++;
+						ov = optv;
 
 						while (ov < ovc)
 						{
-							char alias = ov->alias;
-
-							if (alias && ac == alias)
+							if (ac == ov->alias)
 							{
 								int fs = ov->fs;
 
-								if (fs & OPT_OPTIONAL_ARG) ov->arg = *a ? a : 0;
-								else if (fs & OPT_REQUIRED_ARG)
+								if (fs & OPT_FS_OPTIONAL_ARG)
 								{
+									a++;
+									ov->arg = *a ? a : NULL;
+								}
+								else if (fs & OPT_FS_REQUIRED_ARG)
+								{
+									a++;
+
 									if (*a) ov->arg = a;
 									else
 									{
@@ -62,19 +64,19 @@ int mtt_extr_optv(int argc, char *argv[], int optc, struct mtt_opt_t *optv)
 							ov++;
 						}
 
+						a++;
 						ac = *a;
 					} while (ac);
 
-					goto next_arg;
+				next_arg:
+					av++;
+
+					continue;
 				}
 			}
-
-			break;
 		}
-		else break;
 
-	next_arg:
-		av++;
+		break;
 	}
 
 error:

@@ -3,13 +3,13 @@
 
 #include <stddef.h>
 
-#define OPT_NO_ARG 0x00
-#define OPT_OPTIONAL_ARG 0x01
-#define OPT_REQUIRED_ARG 0x02
+#define OPT_FS_NO_ARG 0x00
+#define OPT_FS_OPTIONAL_ARG 0x01
+#define OPT_FS_REQUIRED_ARG 0x02
 
 struct mtt_opt_t
 {
-	int alias;
+	char alias;
 	int fs;
 	const char *arg;
 };

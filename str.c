@@ -4,14 +4,12 @@ void *mtt_mem_rev(void *mem, size_t n)
 {
 	if (mem)
 	{
-		char *m = mem, *mn = m + n;
+		char *m = mem, *mn = m + n, mc;
 
 		while (m < mn)
 		{
 			mn--;
-
-			char mc = *m;
-
+			mc = *m;
 			*m = *mn;
 			m++;
 			*mn = mc;
@@ -25,7 +23,7 @@ size_t mtt_fstr_to_ival(const char *fstr, const char **end, struct mtt_fmt_t fmt
 {
 	if (fstr == NULL || fmt.base < 2 || fmt.base > 36)
 	{
-		if (end) *end = fstr;
+		if (end) *end = NULL;
 
 		return 0;
 	}
@@ -35,7 +33,7 @@ size_t mtt_fstr_to_ival(const char *fstr, const char **end, struct mtt_fmt_t fmt
 
 	if (fmt.fill)
 	{
-		if (fmt.fs & FMT_FS_FILL_MODE_INTERNAL)
+		if (fmt.fs & FMT_FS_INTERNAL_FILL)
 		{
 			if (fmt.minus && fc == fmt.minus)
 			{
@@ -54,7 +52,7 @@ size_t mtt_fstr_to_ival(const char *fstr, const char **end, struct mtt_fmt_t fmt
 				sign = 1;
 			}
 
-			while  (fc == fmt.fill)
+			while (fc == fmt.fill)
 			{
 				fstr++;
 				fc = *fstr;
@@ -62,9 +60,9 @@ size_t mtt_fstr_to_ival(const char *fstr, const char **end, struct mtt_fmt_t fmt
 		}
 		else
 		{
-			if ((fmt.fs & FMT_FS_FILL_MODE_RIGHT) == 0)
+			if ((fmt.fs & FMT_FS_RIGHT_FILL) == 0)
 			{
-				while  (fc == fmt.fill)
+				while (fc == fmt.fill)
 				{
 					fstr++;
 					fc = *fstr;
@@ -113,11 +111,11 @@ size_t mtt_fstr_to_ival(const char *fstr, const char **end, struct mtt_fmt_t fmt
 
 	if (fmt.base > 10)
 	{
-		char diff = 0;
+		char ltrcase = fmt.fs & FMT_FS_LOWERCASE, diff;
 
-		if (fmt.fs & FMT_FS_LTR_CASE_UPPER)
+		if (ltrcase)
 		{
-			char min = (fmt.fs & FMT_FS_LTR_CASE_LOWER) == FMT_FS_LTR_CASE_LOWER ? 'a' : 'A', diffmin = min - 10, max = diffmin + fmt.base;
+			char min = ltrcase == FMT_FS_LOWERCASE ? 'a' : 'A', diffmin = min - 10, max = diffmin + fmt.base;
 
 			while (1)
 			{
@@ -126,7 +124,7 @@ size_t mtt_fstr_to_ival(const char *fstr, const char **end, struct mtt_fmt_t fmt
 				else break;
 
 				fstr++;
-				ival = ival + fmt.base + fc - diff;
+				ival = ival * fmt.base + fc - diff;
 				fc = *fstr;
 			}
 		}
@@ -185,12 +183,11 @@ size_t mtt_ival_to_fstr(char *fstr, size_t ival, struct mtt_fmt_t fmt)
 
 		if (fmt.base > 10)
 		{
-			char a = (fmt.fs & FMT_FS_LTR_CASE_LOWER) == FMT_FS_LTR_CASE_LOWER ? 87 : 55;
+			char a = (fmt.fs & FMT_FS_LOWERCASE) == FMT_FS_LOWERCASE ? 87 : 55, rem;
 
 			do
 			{
-				char rem = ival % fmt.base;
-
+				rem = ival % fmt.base;
 				ival /= fmt.base;
 				*f = (rem < 10 ? '0' : a) + rem;
 				f++;
@@ -210,7 +207,7 @@ size_t mtt_ival_to_fstr(char *fstr, size_t ival, struct mtt_fmt_t fmt)
 		{
 			char *fw;
 
-			if (fmt.fs & FMT_FS_FILL_MODE_INTERNAL)
+			if (fmt.fs & FMT_FS_INTERNAL_FILL)
 			{
 				fw = fstr + fmt.width - 1;
 
@@ -239,7 +236,7 @@ size_t mtt_ival_to_fstr(char *fstr, size_t ival, struct mtt_fmt_t fmt)
 				len = f - fstr;
 				mtt_mem_rev(fstr, len);
 			}
-			else if (fmt.fs & FMT_FS_FILL_MODE_RIGHT)
+			else if (fmt.fs & FMT_FS_RIGHT_FILL)
 			{
 				if (neg)
 				{
