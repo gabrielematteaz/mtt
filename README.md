@@ -3,4 +3,5 @@ My personal C library
 
 # Libraries
 - cmd_line
-- str
+- fmt
+- util
