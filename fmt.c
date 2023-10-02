@@ -1,6 +1,6 @@
 #include "fmt.h"
 
-#ifndef MTT_UTIL_H
+#ifndef MTT_MISC_H
 
 static void *mtt_mem_rev(void *mem, size_t n)
 {
@@ -25,7 +25,7 @@ static void *mtt_mem_rev(void *mem, size_t n)
 
 size_t mtt_fstr_to_ival(const char *fstr, const char **end, struct mtt_ivalfmt_t fmt)
 {
-	char filling, fstrc, sign;
+	char fstrc, filling, sign;
 	size_t ival;
 
 	if (fstr == NULL || fmt.base < 2 || fmt.base > 36)
@@ -35,10 +35,11 @@ size_t mtt_fstr_to_ival(const char *fstr, const char **end, struct mtt_ivalfmt_t
 		return 0;
 	}
 
-	filling = fmt.fs & FMT_FILLING_MASK;
 	fstrc = *fstr;
 
 	if (fmt.fill == '\0') goto skip_filling;
+
+	filling = fmt.fs & FMT_FILLING_MASK;
 
 	if (filling == FMT_FILLING_INTERNAL)
 	{
@@ -99,17 +100,17 @@ size_t mtt_fstr_to_ival(const char *fstr, const char **end, struct mtt_ivalfmt_t
 
 	if (fmt.base > 10)
 	{
-		char ltrcase = fmt.fs & IVALFMT_LTR_CASE_MASK, diff;
+		char ltrcase = fmt.fs & VALFMT_LTR_CASE_MASK, diff;
 
-		if (ltrcase == IVALFMT_LTR_CASE_UNK)
+		if (ltrcase == VALFMT_LTR_CASE_UNK)
 		{
 			char umax = 55 + fmt.base, lmax = umax + 32;
 
 			while (1)
 			{
-				if (fstrc >= '0' && fstrc <= '9') diff = '0';
-				else if (fstrc >= 'A' && fstrc < umax) diff = 55;
-				else if (fstrc >= 'a' && fstrc < lmax) diff = 87;
+				if ('0' <= fstrc && fstrc <= '9') diff = '0';
+				else if ('A' <= fstrc && fstrc < umax) diff = 55;
+				else if ('a' <= fstrc && fstrc < lmax) diff = 87;
 				else break;
 
 				fstr++;
@@ -119,12 +120,12 @@ size_t mtt_fstr_to_ival(const char *fstr, const char **end, struct mtt_ivalfmt_t
 		}
 		else
 		{
-			char min = ltrcase == IVALFMT_LTR_CASE_LOWER ? 'a' : 'A', diffmin = min - 10, max = diffmin + fmt.base;
+			char min = ltrcase == VALFMT_LTR_CASE_LOWER ? 'a' : 'A', d = min - 10, max = d + fmt.base;
 
 			while (1)
 			{
-				if (fstrc >= '0' && fstrc <= '9') diff = '0';
-				else if (fstrc >= min && fstrc < max) diff = diffmin;
+				if ('0' <= fstrc && fstrc <= '9') diff = '0';
+				else if (min <= fstrc && fstrc < max) diff = d;
 				else break;
 
 				fstr++;
@@ -137,7 +138,7 @@ size_t mtt_fstr_to_ival(const char *fstr, const char **end, struct mtt_ivalfmt_t
 	{
 		char max = '0' + fmt.base;
 
-		while (fstrc >= '0' && fstrc < max)
+		while ('0' <= fstrc && fstrc < max)
 		{
 			fstr++;
 			ival = ival * fmt.base + fstrc - '0';
@@ -158,7 +159,7 @@ size_t mtt_ival_to_fstr(char *fstr, size_t ival, struct mtt_ivalfmt_t fmt)
 
 	if (fstr)
 	{
-		char neg, *f, filling, *fstrwidth;
+		char neg, *f = fstr, filling, *fstrwidth;
 
 		if (fmt.minus && (ptrdiff_t)ival < 0)
 		{
@@ -167,11 +168,9 @@ size_t mtt_ival_to_fstr(char *fstr, size_t ival, struct mtt_ivalfmt_t fmt)
 		}
 		else neg = 0;
 
-		f = fstr;
-
 		if (fmt.base > 10)
 		{
-			char a = (fmt.fs & IVALFMT_LTR_CASE_LOWER) == IVALFMT_LTR_CASE_LOWER ? 87 : 55, rem;
+			char a = (fmt.fs & VALFMT_LTR_CASE_MASK) == VALFMT_LTR_CASE_LOWER ? 87 :  55, rem;
 
 			do
 			{
