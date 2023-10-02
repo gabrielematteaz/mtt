@@ -2,6 +2,6 @@
 My personal C library
 
 # Libraries
-- cmd_line
+- cmdline
 - fmt
-- util
+- misc
