@@ -1,20 +1,22 @@
 #include "fmt.h"
 
-#ifndef MTT_MISC_H
+#ifndef MTT_STR_H
 
 static void *mtt_mem_rev(void *mem, size_t n)
 {
 	if (mem)
 	{
-		char *m = mem, *mn = m + n, mc;
+		size_t i = 0;
+		char *m = mem;
 
-		while (m < mn)
+		while (i < n)
 		{
-			mn--;
-			mc = *m;
-			*m = *mn;
-			m++;
-			*mn = mc;
+			char mc = m[i];
+
+			n--;
+			m[i] = m[n];
+			i++;
+			m[n] = mc;
 		}
 	}
 
@@ -23,273 +25,303 @@ static void *mtt_mem_rev(void *mem, size_t n)
 
 #endif
 
-size_t mtt_fstr_to_ival(const char *fstr, const char **end, struct mtt_ivalfmt_t fmt)
+size_t mtt_fstr_to_ival(const char *fstr, const char **end, struct mtt_ival_fmt_t fmt)
 {
-	char fstrc, filling, sign;
-	size_t ival;
+	size_t ival = 0;
+	char sign;
 
 	if (fstr == NULL || fmt.base < 2 || fmt.base > 36)
 	{
-		if (end) *end = NULL;
-
-		return 0;
-	}
-
-	fstrc = *fstr;
-
-	if (fmt.fill == '\0') goto skip_filling;
-
-	filling = fmt.fs & FMT_FILLING_MASK;
-
-	if (filling == FMT_FILLING_INTERNAL)
-	{
-		if (fmt.minus && fstrc == fmt.minus)
-		{
-			fstr++;
-			fstrc = *fstr;
-			sign = -1;
-		}
-		else
-		{
-			if (fmt.plus && fstrc == fmt.plus)
-			{
-				fstr++;
-				fstrc = *fstr;
-			}
-
-			sign = 1;
-		}
-
-		while (fstrc == fmt.fill)
-		{
-			fstr++;
-			fstrc = *fstr;
-		}
+		fstr = NULL;
+		sign = 0;
 	}
 	else
 	{
-		if (filling == FMT_FILLING_LEFT)
+		char filling = fmt.fs & FMT_FILLING_MASK;
+		size_t i = 0;
+
+		if (fmt.fill == '\0')
 		{
-			while (fstrc == fmt.fill)
+			fmt.fill = '0';
+		}
+
+		if (filling == FMT_FILLING_INTERNAL)
+		{
+			if (fmt.minus && fstr[i] == fmt.minus)
 			{
-				fstr++;
-				fstrc = *fstr;
+				sign = -1;
+				i++;
 			}
-		}
-
-	skip_filling:
-		if (fmt.minus && fstrc == fmt.minus)
-		{
-			fstr++;
-			fstrc = *fstr;
-			sign = -1;
-		}
-		else
-		{
-			if (fmt.plus && fstrc == fmt.plus)
+			else
 			{
-				fstr++;
-				fstrc = *fstr;
+				sign = 1;
+
+				if (fmt.plus && fstr[i] == fmt.plus)
+				{
+					i++;
+				}
 			}
 
-			sign = 1;
-		}
-	}
-
-	ival = 0;
-
-	if (fmt.base > 10)
-	{
-		char ltrcase = fmt.fs & VALFMT_LTR_CASE_MASK, diff;
-
-		if (ltrcase == VALFMT_LTR_CASE_UNK)
-		{
-			char umax = 55 + fmt.base, lmax = umax + 32;
-
-			while (1)
+			while (fstr[i] == fmt.fill)
 			{
-				if ('0' <= fstrc && fstrc <= '9') diff = '0';
-				else if ('A' <= fstrc && fstrc < umax) diff = 55;
-				else if ('a' <= fstrc && fstrc < lmax) diff = 87;
-				else break;
-
-				fstr++;
-				ival = ival * fmt.base + fstrc - diff;
-				fstrc = *fstr;
+				i++;
 			}
 		}
 		else
 		{
-			char min = ltrcase == VALFMT_LTR_CASE_LOWER ? 'a' : 'A', d = min - 10, max = d + fmt.base;
-
-			while (1)
+			if (filling == FMT_FILLING_LEFT)
 			{
-				if ('0' <= fstrc && fstrc <= '9') diff = '0';
-				else if (min <= fstrc && fstrc < max) diff = d;
-				else break;
+				while (fstr[i] == fmt.fill)
+				{
+					i++;
+				}
+			}
 
-				fstr++;
-				ival = ival * fmt.base + fstrc - diff;
-				fstrc = *fstr;
+			if (fmt.minus && fstr[i] == fmt.minus)
+			{
+				sign = -1;
+				i++;
+			}
+			else
+			{
+				sign = 1;
+
+				if (fmt.plus && fstr[i] == fmt.plus)
+				{
+					i++;
+				}
 			}
 		}
-	}
-	else
-	{
-		char max = '0' + fmt.base;
 
-		while ('0' <= fstrc && fstrc < max)
+		if (fmt.base > 10)
 		{
-			fstr++;
-			ival = ival * fmt.base + fstrc - '0';
-			fstrc = *fstr;
+			char ltrcase = fmt.fs & VALFMT_LTR_CASE_MASK, invchar = 0;
+
+			if (ltrcase == VALFMT_LTR_CASE_UNK)
+			{
+				char umax = 55 + fmt.base, lmax = umax + 32;
+
+				while (invchar == 0)
+				{
+					if ('0' <= fstr[i] && fstr[i] <= '9')
+					{
+						ival = ival * fmt.base + fstr[i] - '0';
+						i++;
+					}
+					else if ('A' <= fstr[i] && fstr[i] < umax)
+					{
+						ival = ival * fmt.base + fstr[i] - 55;
+						i++;
+					}
+					else if ('a' <= fstr[i] && fstr[i] < lmax)
+					{
+						ival = ival * fmt.base + fstr[i] - 87;
+						i++;
+					}
+					else
+					{
+						invchar = 1;
+					}
+				}
+			}
+			else
+			{
+				char min = ltrcase == VALFMT_LTR_CASE_LOWER ? 'a' : 'A', m = min - 10, max = m + fmt.base;
+
+				while (invchar == 0)
+				{
+					if ('0' <= fstr[i] && fstr[i] <= '9')
+					{
+						ival = ival * fmt.base + fstr[i] - '0';
+						i++;
+					}
+					else if (min <= fstr[i] && fstr[i] < max)
+					{
+						ival = ival * fmt.base + fstr[i] - '0';
+						i++;
+					}
+					else
+					{
+						invchar = 1;
+					}
+				}
+			}
 		}
+		else
+		{
+			char max = '0' + fmt.base;
+
+			while ('0' <= fstr[i] && fstr[i] < max)
+			{
+				ival = ival * fmt.base + fstr[i] - '0';
+				i++;
+			}
+		}
+
+		fstr = fstr + i;
 	}
 
-	if (end) *end = fstr;
+	if (end)
+	{
+		*end = fstr;
+	}
 
 	return ival * sign;
 }
 
-size_t mtt_ival_to_fstr(char *fstr, size_t ival, struct mtt_ivalfmt_t fmt)
+size_t mtt_ival_to_fstr(char *fstr, size_t ival, struct mtt_ival_fmt_t fmt)
 {
 	size_t len;
 
-	if (fmt.base < 2 || fmt.base > 36) return 0;
-
-	if (fstr)
+	if (fmt.base < 2 || fmt.base > 36)
 	{
-		char neg, *f = fstr, filling, *fstrwidth;
-
-		if (fmt.minus && (ptrdiff_t)ival < 0)
-		{
-			ival = -ival;
-			neg = 1;
-		}
-		else neg = 0;
-
-		if (fmt.base > 10)
-		{
-			char a = (fmt.fs & VALFMT_LTR_CASE_MASK) == VALFMT_LTR_CASE_LOWER ? 87 :  55, rem;
-
-			do
-			{
-				rem = ival % fmt.base;
-				ival /= fmt.base;
-				*f = (rem < 10 ? '0' : a) + rem;
-				f++;
-			} while (ival);
-		}
-		else
-		{
-			do
-			{
-				*f = '0' + ival % fmt.base;
-				ival /= fmt.base;
-				f++;
-			} while (ival);
-		}
-
-		if (fmt.fill == '\0') fmt.width = 0;
-
-		filling = fmt.fs & FMT_FILLING_MASK;
-
-		if (filling == FMT_FILLING_INTERNAL)
-		{
-			fstrwidth = fstr + fmt.width - 1;
-
-			while (f < fstrwidth)
-			{
-				*f = fmt.fill;
-				f++;
-			}
-
-			if (neg)
-			{
-				*f = fmt.minus;
-				f++;
-			}
-			else if (fmt.plus)
-			{
-				*f = fmt.plus;
-				f++;
-			}
-			else if (f == fstrwidth)
-			{
-				*f = fmt.fill;
-				f++;
-			}
-
-			len = f - fstr;
-			mtt_mem_rev(fstr, len);
-		}
-		else if (filling == FMT_FILLING_RIGHT)
-		{
-			if (neg)
-			{
-				*f = fmt.minus;
-				f++;
-			}
-			else if (fmt.plus)
-			{
-				*f = fmt.plus;
-				f++;
-			}
-
-			mtt_mem_rev(fstr, f - fstr);
-			fstrwidth = fstr + fmt.width;
-
-			while (f < fstrwidth)
-			{
-				*f = fmt.fill;
-				f++;
-			}
-
-			len = f - fstr;
-		}
-		else
-		{
-			if (neg)
-			{
-				*f = fmt.minus;
-				f++;
-			}
-			else if (fmt.plus)
-			{
-				*f = fmt.plus;
-				f++;
-			}
-
-			fstrwidth = fstr + fmt.width;
-
-			while (f < fstrwidth)
-			{
-				*f = fmt.fill;
-				f++;
-			}
-
-			len = f - fstr;
-			mtt_mem_rev(fstr, len);
-		}
-
-		if ((fmt.fs & FMT_NULL_TERM_NONE) == 0) *f = 0;
+		len = 0;
 	}
 	else
 	{
-		if (fmt.minus && (ptrdiff_t)ival < 0)
+		if (fstr == NULL)
 		{
-			ival = -ival;
-			len = 1;
+			if (fmt.minus && (ptrdiff_t)ival < 0)
+			{
+				ival = -ival;
+				len = 1;
+			}
+			else
+			{
+				len = fmt.plus == '\0' ? 0 : 1;
+			}
+
+			do
+			{
+				ival /= fmt.base;
+				len++;
+			} while (ival);
+
+			if (len < fmt.width)
+			{
+				len = fmt.width;
+			}
 		}
-		else len = fmt.plus ? 1 : 0;
-
-		do
+		else
 		{
-			ival /= fmt.base;
-			len++;
-		} while (ival);
+			char neg, filling = fmt.fs & FMT_FILLING_MASK;
 
-		if (len < fmt.width) len = fmt.width;
+			if (fmt.minus && (ptrdiff_t)ival < 0)
+			{
+				ival = -ival;
+				neg = 1;
+			}
+			else
+			{
+				neg = 0;
+			}
+
+			len = 0;
+
+			if (fmt.base > 10)
+			{
+				char a = (fmt.fs & VALFMT_LTR_CASE_MASK) == VALFMT_LTR_CASE_LOWER ? 87 : 55;
+
+				do
+				{
+					char rem = ival % fmt.base;
+
+					fstr[len] = (rem < 10 ? '0' : a) + rem;
+					ival /= fmt.base;
+					len++;
+				} while (ival);
+			}
+			else
+			{
+				do
+				{
+					fstr[len] = '0' + ival % fmt.base;
+					ival /= fmt.base;
+					len++;
+				} while (ival);
+			}
+
+			if (fmt.fill == '\0')
+			{
+				fmt.width = 1;
+			}
+
+			if (filling == FMT_FILLING_INTERNAL)
+			{
+				fmt.width--;
+
+				while (len < fmt.width)
+				{
+					fstr[len] = fmt.fill;
+					len++;
+				}
+
+				if (neg)
+				{
+					fstr[len] = fmt.minus;
+					len++;
+				}
+				else if (fmt.plus)
+				{
+					fstr[len] = fmt.plus;
+					len++;
+				}
+				else if (len == fmt.width)
+				{
+					fstr[len] = fmt.fill;
+					len++;
+				}
+
+				mtt_mem_rev(fstr, len);
+			}
+			else if (filling == FMT_FILLING_RIGHT)
+			{
+				if (neg)
+				{
+					fstr[len] = fmt.minus;
+					len++;
+				}
+				else if (fmt.plus)
+				{
+					fstr[len] = fmt.plus;
+					len++;
+				}
+
+				mtt_mem_rev(fstr, len);
+
+				while (len < fmt.width)
+				{
+					fstr[len] = fmt.fill;
+					len++;
+				}
+			}
+			else
+			{
+				if (neg)
+				{
+					fstr[len] = fmt.minus;
+					len++;
+				}
+				else if (fmt.plus)
+				{
+					fstr[len] = fmt.plus;
+					len++;
+				}
+
+				while (len < fmt.width)
+				{
+					fstr[len] = fmt.fill;
+					len++;
+				}
+
+				mtt_mem_rev(fstr, len);
+			}
+
+			if ((fmt.fs & FMT_NULL_TERM_MASK) == FMT_NULL_TERM)
+			{
+				fstr[len] = '\0';
+			}
+		}
 	}
 
 	return len;

@@ -2,79 +2,114 @@
 
 int mtt_extr_optv(int argc, char *argv[], int optc, struct mtt_opt_t *optv)
 {
-	char **av, **argvc, *arg, *a, ac, argtype;
-	struct mtt_opt_t *optvc, *ov;
+	int i;
 
-	if (argv == NULL || optv == NULL) return 0;
-
-	av = argv + 1;
-	argvc = argv + argc;
-	optvc = optv + optc;
-
-next_arg:
-	if (av < argvc)
+	if (argv == NULL || optv == NULL)
 	{
-		arg = *av;
+		i = 0;
+	}
+	else
+	{
+		char invarg = 0;
 
-		if (arg && *arg == '-')
+		i = 1;
+
+		while (invarg == 0 && i < argc)
 		{
-			a = arg + 1;
-			ac = *a;
-
-			if (ac)
+			if (argv[i] == NULL)
 			{
-				av++;
+				invarg = 1;
+			}
+			else
+			{
+				size_t j = 0;
 
-				if (ac != '-')
+				if (argv[i][j] == '-')
 				{
-					do
+					j++;
+
+					if (argv[i][j] == '\0')
 					{
-						a++;
-						ov = optv;
+						invarg = 1;
+					}
+					else if (argv[i][j] == '-')
+					{
+						i++;
+						invarg = 1;
+					}
+					else
+					{
+						char newarg = 0;
 
-						while (ov < optvc)
+						do
 						{
-							if (ac == ov->alias)
-							{
-								argtype = ov->fs & OPT_ARG_TYPE_MASK;
+							char optfound = 0;
+							size_t k = 0;
 
-								if (argtype)
+							while (optfound == 0 && k < optc)
+							{
+								if (argv[i][j] == optv[k].alias)
 								{
-									if (*a) ov->arg = a;
+									char argtype = optv[k].fs & OPT_ARG_TYPE_MASK;
+
+									if (argtype == OPT_ARG_TYPE_NONE)
+									{
+										optv[k].arg = argv[i];
+									}
 									else
 									{
-										if (argtype == OPT_ARG_TYPE_REQUIRED)
+										j++;
+
+										if (argv[i][j] == '\0')
 										{
-											arg = *av;
+											if (argtype == OPT_ARG_TYPE_REQUIRED)
+											{
+												i++;
 
-											if (av == argvc && arg) goto error;
-
-											ov->arg = arg;
-											av++;
+												if (i == argc)
+												{
+													invarg = 1;
+												}
+												else
+												{
+													optv[k].arg = argv[i];
+												}
+											}
+											else
+											{
+												optv[k].arg = NULL;
+											}
 										}
-										else ov->arg = NULL;
+										else
+										{
+											optv[k].arg = argv[i] + j;
+										}
 
-										goto next_arg;
+										newarg = 1;
 									}
+
+									optfound = 1;
 								}
 
-								ov->arg = arg;
-
-								break;
+								k++;
 							}
 
-							ov++;
+							j++;
+						} while (newarg == 0 && argv[i][j]);
+
+						if (invarg == 0)
+						{
+							i++;
 						}
-
-						ac = *a;
-					} while (ac);
-
-					goto next_arg;
+					}
+				}
+				else
+				{
+					invarg = 1;
 				}
 			}
 		}
 	}
 
-error:
-	return av - argv;
+	return i;
 }
