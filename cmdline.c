@@ -1,6 +1,6 @@
 #include "cmdline.h"
 
-int mtt_extr_optv(int argc, char *argv[], int optc, struct mtt_opt_t *optv)
+int mtt_extr_optv(int argc, char *argv[], size_t optc, struct mtt_opt_t *optv)
 {
 	int i;
 
@@ -50,9 +50,9 @@ int mtt_extr_optv(int argc, char *argv[], int optc, struct mtt_opt_t *optv)
 							{
 								if (argv[i][j] == optv[k].alias)
 								{
-									char argtype = optv[k].fs & OPT_ARG_TYPE_MASK;
+									char arg = optv[k].fs & OPT_ARG_MASK;
 
-									if (argtype == OPT_ARG_TYPE_NONE)
+									if (arg == OPT_ARG_NONE)
 									{
 										optv[k].arg = argv[i];
 									}
@@ -62,7 +62,7 @@ int mtt_extr_optv(int argc, char *argv[], int optc, struct mtt_opt_t *optv)
 
 										if (argv[i][j] == '\0')
 										{
-											if (argtype == OPT_ARG_TYPE_REQUIRED)
+											if (arg == OPT_ARG_REQUIRED)
 											{
 												i++;
 

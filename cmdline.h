@@ -3,10 +3,10 @@
 
 #include <stddef.h>
 
-#define OPT_ARG_TYPE_NONE 0x0
-#define OPT_ARG_TYPE_OPTIONAL 0x1
-#define OPT_ARG_TYPE_REQUIRED 0x3
-#define OPT_ARG_TYPE_MASK 0x3
+#define OPT_ARG_NONE 0x0
+#define OPT_ARG_OPTIONAL 0x1
+#define OPT_ARG_REQUIRED 0x3
+#define OPT_ARG_MASK 0x3
 
 struct mtt_opt_t
 {
@@ -15,6 +15,6 @@ struct mtt_opt_t
 	const char *arg;
 };
 
-int mtt_extr_optv(int argc, char *argv[], int optc, struct mtt_opt_t *optv);
+int mtt_extr_optv(int argc, char *argv[], size_t optc, struct mtt_opt_t *optv);
 
 #endif

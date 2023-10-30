@@ -27,8 +27,8 @@ static void *mtt_mem_rev(void *mem, size_t n)
 
 size_t mtt_fstr_to_ival(const char *fstr, const char **end, struct mtt_ival_fmt_t fmt)
 {
-	size_t ival = 0;
 	char sign;
+	size_t ival = 0;
 
 	if (fstr == NULL || fmt.base < 2 || fmt.base > 36)
 	{
@@ -95,13 +95,13 @@ size_t mtt_fstr_to_ival(const char *fstr, const char **end, struct mtt_ival_fmt_
 
 		if (fmt.base > 10)
 		{
-			char ltrcase = fmt.fs & VALFMT_LTR_CASE_MASK, invchar = 0;
+			char ltrcase = fmt.fs & VALFMT_LTR_CASE_MASK, inv = 0;
 
 			if (ltrcase == VALFMT_LTR_CASE_UNK)
 			{
 				char umax = 55 + fmt.base, lmax = umax + 32;
 
-				while (invchar == 0)
+				while (inv == 0)
 				{
 					if ('0' <= fstr[i] && fstr[i] <= '9')
 					{
@@ -120,7 +120,7 @@ size_t mtt_fstr_to_ival(const char *fstr, const char **end, struct mtt_ival_fmt_
 					}
 					else
 					{
-						invchar = 1;
+						inv = 1;
 					}
 				}
 			}
@@ -128,7 +128,7 @@ size_t mtt_fstr_to_ival(const char *fstr, const char **end, struct mtt_ival_fmt_
 			{
 				char min = ltrcase == VALFMT_LTR_CASE_LOWER ? 'a' : 'A', m = min - 10, max = m + fmt.base;
 
-				while (invchar == 0)
+				while (inv == 0)
 				{
 					if ('0' <= fstr[i] && fstr[i] <= '9')
 					{
@@ -137,12 +137,12 @@ size_t mtt_fstr_to_ival(const char *fstr, const char **end, struct mtt_ival_fmt_
 					}
 					else if (min <= fstr[i] && fstr[i] < max)
 					{
-						ival = ival * fmt.base + fstr[i] - '0';
+						ival = ival * fmt.base + fstr[i] - m;
 						i++;
 					}
 					else
 					{
-						invchar = 1;
+						inv = 1;
 					}
 				}
 			}
@@ -166,7 +166,7 @@ size_t mtt_fstr_to_ival(const char *fstr, const char **end, struct mtt_ival_fmt_
 		*end = fstr;
 	}
 
-	return ival * sign;
+	return sign * ival;
 }
 
 size_t mtt_ival_to_fstr(char *fstr, size_t ival, struct mtt_ival_fmt_t fmt)
