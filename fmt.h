@@ -27,8 +27,8 @@ struct mtt_ival_fmt_t
 	size_t width;
 };
 
-size_t mtt_fstr_to_ival(const char *fstr, const char **end, struct mtt_ival_fmt_t fmt);
+unsigned long mtt_fstr_to_ival(const char *fstr, char **end, struct mtt_ival_fmt_t fmt);
 
-size_t mtt_ival_to_fstr(char *fstr, size_t ival, struct mtt_ival_fmt_t fmt);
+size_t mtt_ival_to_fstr(char *fstr, unsigned long ival, struct mtt_ival_fmt_t fmt);
 
 #endif

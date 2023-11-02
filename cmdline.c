@@ -6,19 +6,15 @@ int mtt_extr_optv(int argc, char *argv[], size_t optc, struct mtt_opt_t *optv)
 
 	if (argv == NULL || optv == NULL)
 	{
+		char inv = 0;
+
 		i = 0;
-	}
-	else
-	{
-		char invarg = 0;
 
-		i = 1;
-
-		while (invarg == 0 && i < argc)
+		while (inv == 0 && i < argc)
 		{
 			if (argv[i] == NULL)
 			{
-				invarg = 1;
+				inv = 1;
 			}
 			else
 			{
@@ -30,23 +26,23 @@ int mtt_extr_optv(int argc, char *argv[], size_t optc, struct mtt_opt_t *optv)
 
 					if (argv[i][j] == '\0')
 					{
-						invarg = 1;
+						inv = 1;
 					}
 					else if (argv[i][j] == '-')
 					{
 						i++;
-						invarg = 1;
+						inv = 1;
 					}
 					else
 					{
-						char newarg = 0;
+						char skip = 0;
 
 						do
 						{
-							char optfound = 0;
+							char found = 0;
 							size_t k = 0;
 
-							while (optfound == 0 && k < optc)
+							while (found == 0 && k < optc)
 							{
 								if (argv[i][j] == optv[k].alias)
 								{
@@ -62,22 +58,22 @@ int mtt_extr_optv(int argc, char *argv[], size_t optc, struct mtt_opt_t *optv)
 
 										if (argv[i][j] == '\0')
 										{
-											if (arg == OPT_ARG_REQUIRED)
+											if (arg == OPT_ARG_OPTIONAL)
+											{
+												optv[k].arg = NULL;
+											}
+											else
 											{
 												i++;
 
 												if (i == argc)
 												{
-													invarg = 1;
+													inv = 1;
 												}
 												else
 												{
 													optv[k].arg = argv[i];
 												}
-											}
-											else
-											{
-												optv[k].arg = NULL;
 											}
 										}
 										else
@@ -85,19 +81,19 @@ int mtt_extr_optv(int argc, char *argv[], size_t optc, struct mtt_opt_t *optv)
 											optv[k].arg = argv[i] + j;
 										}
 
-										newarg = 1;
+										skip = 1;
 									}
 
-									optfound = 1;
+									found = 1;
 								}
 
 								k++;
 							}
 
 							j++;
-						} while (newarg == 0 && argv[i][j]);
+						} while (skip == 0 && argv[i][j]);
 
-						if (invarg == 0)
+						if (inv == 0)
 						{
 							i++;
 						}
@@ -105,10 +101,14 @@ int mtt_extr_optv(int argc, char *argv[], size_t optc, struct mtt_opt_t *optv)
 				}
 				else
 				{
-					invarg = 1;
+					inv = 1;
 				}
 			}
 		}
+	}
+	else
+	{
+		i = 1;
 	}
 
 	return i;
