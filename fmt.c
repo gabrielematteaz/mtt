@@ -25,7 +25,7 @@ static void *mtt_mem_rev(void *mem, size_t n)
 
 #endif
 
-unsigned long mtt_fstr_to_ival(const char *fstr, char **end, struct mtt_ival_fmt_t fmt)
+unsigned long mtt_atoi(const char *fstr, char **end, struct mtt_atoi_fmt_t fmt)
 {
 	unsigned long ival = 0;
 	char sign;
@@ -58,9 +58,9 @@ unsigned long mtt_fstr_to_ival(const char *fstr, char **end, struct mtt_ival_fmt
 		}
 		else
 		{
-			char filling = fmt.fs & FMT_FILLING_MASK;
+			char filling = fmt.flags & ATOI_FILLING_MASK;
 
-			if (filling == FMT_FILLING_INTERNAL)
+			if (filling == ATOI_FILLING_INTERNAL)
 			{
 				if (fmt.minus && fstr[i] == fmt.minus)
 				{
@@ -84,7 +84,7 @@ unsigned long mtt_fstr_to_ival(const char *fstr, char **end, struct mtt_ival_fmt
 			}
 			else
 			{
-				if (filling == FMT_FILLING_LEFT)
+				if (filling == ATOI_FILLING_LEFT)
 				{
 					while (fstr[i] == fmt.fill)
 					{
@@ -111,9 +111,9 @@ unsigned long mtt_fstr_to_ival(const char *fstr, char **end, struct mtt_ival_fmt
 
 		if (fmt.base > 10)
 		{
-			char ltrcase = fmt.fs & VALFMT_LTR_CASE_MASK, inv = 0;
+			char ltrcase = fmt.flags & ATOI_LTR_CASE_MASK, inv = 0;
 
-			if (ltrcase == VALFMT_LTR_CASE_UNK)
+			if (ltrcase == ATOI_LTR_CASE_UNK)
 			{
 				char umax = 55 + fmt.base, lmax = umax + 32;
 
@@ -142,7 +142,7 @@ unsigned long mtt_fstr_to_ival(const char *fstr, char **end, struct mtt_ival_fmt
 			}
 			else
 			{
-				char min = ltrcase == VALFMT_LTR_CASE_LOWER ? 'a' : 'A', m = min - 10, max = m + fmt.base;
+				char min = ltrcase == ATOI_LTR_CASE_UPPER ? 'A' : 'a', m = min - 10, max = m + fmt.base;
 
 				while (inv == 0)
 				{
@@ -185,7 +185,7 @@ unsigned long mtt_fstr_to_ival(const char *fstr, char **end, struct mtt_ival_fmt
 	return ival * sign;
 }
 
-size_t mtt_ival_to_fstr(char *fstr, unsigned long ival, struct mtt_ival_fmt_t fmt)
+size_t mtt_itoa(char *fstr, unsigned long ival, struct mtt_itoa_fmt_t fmt)
 {
 	size_t len;
 
@@ -220,7 +220,7 @@ size_t mtt_ival_to_fstr(char *fstr, unsigned long ival, struct mtt_ival_fmt_t fm
 		}
 		else
 		{
-			char neg;
+			char neg, filling = fmt.flags & ITOA_FILLING_MASK;
 
 			if (fmt.minus && (long)ival < 0)
 			{
@@ -236,7 +236,7 @@ size_t mtt_ival_to_fstr(char *fstr, unsigned long ival, struct mtt_ival_fmt_t fm
 
 			if (fmt.base > 10)
 			{
-				char a = (fmt.fs & VALFMT_LTR_CASE_MASK) == VALFMT_LTR_CASE_LOWER ? 87 : 55;
+				char a = fmt.flags & ITOA_LTR_CASE_LOWER ? 87 : 55;
 
 				do
 				{
@@ -257,7 +257,12 @@ size_t mtt_ival_to_fstr(char *fstr, unsigned long ival, struct mtt_ival_fmt_t fm
 				} while (ival);
 			}
 
-			if (fmt.fill == '\0' || fmt.width == 0)
+			if (fmt.fill == '\0')
+			{
+				fmt.width = 1;
+			}
+
+			if (filling == ITOA_FILLING_LEFT)
 			{
 				if (neg)
 				{
@@ -269,84 +274,67 @@ size_t mtt_ival_to_fstr(char *fstr, unsigned long ival, struct mtt_ival_fmt_t fm
 					fstr[len] = fmt.plus;
 					len++;
 				}
+
+				while (len < fmt.width)
+				{
+					fstr[len] = fmt.fill;
+					len++;
+				}
+
+				mtt_mem_rev(fstr, len);
+			}
+			else if (filling == ITOA_FILLING_INTERNAL)
+			{
+				char *fstrlen = fstr + len, *fstrwidth = fstr + fmt.width - 1;
+
+				while (fstrlen < fstrwidth)
+				{
+					*fstrlen = fmt.fill;
+					fstrlen++;
+				}
+
+				if (neg)
+				{
+					*fstrlen = fmt.minus;
+					fstrlen++;
+				}
+				else if (fmt.plus)
+				{
+					*fstrlen = fmt.plus;
+					fstrlen++;
+				}
+				if (fstrlen == fstrwidth)
+				{
+					*fstrlen = fmt.fill;
+					fstrlen++;
+				}
+
+				len = fstrlen - fstr;
+				mtt_mem_rev(fstr, len);
 			}
 			else
 			{
-				char filling = fmt.fs & FMT_FILLING_MASK;
-
-				if (filling == FMT_FILLING_INTERNAL)
+				if (neg)
 				{
-					fmt.width--;
-
-					while (len < fmt.width)
-					{
-						fstr[len] = fmt.fill;
-						len++;
-					}
-
-					if (neg)
-					{
-						fstr[len] = fmt.minus;
-						len++;
-					}
-					else if (fmt.plus)
-					{
-						fstr[len] = fmt.plus;
-						len++;
-					}
-					else if (len == fmt.width)
-					{
-						fstr[len] = fmt.fill;
-						len++;
-					}
-
-					mtt_mem_rev(fstr, len);
+					fstr[len] = fmt.minus;
+					len++;
 				}
-				else if (filling == FMT_FILLING_RIGHT)
+				else if (fmt.plus)
 				{
-					if (neg)
-					{
-						fstr[len] = fmt.minus;
-						len++;
-					}
-					else if (fmt.plus)
-					{
-						fstr[len] = fmt.plus;
-						len++;
-					}
-
-					mtt_mem_rev(fstr, len);
-
-					while (len < fmt.width)
-					{
-						fstr[len] = fmt.fill;
-						len++;
-					}
+					fstr[len] = fmt.plus;
+					len++;
 				}
-				else
+
+				mtt_mem_rev(fstr, len);
+
+				while (len < fmt.width)
 				{
-					if (neg)
-					{
-						fstr[len] = fmt.minus;
-						len++;
-					}
-					else if (fmt.plus)
-					{
-						fstr[len] = fmt.plus;
-						len++;
-					}
-
-					while (len < fmt.width)
-					{
-						fstr[len] = fmt.fill;
-						len++;
-					}
-
-					mtt_mem_rev(fstr, len);
+					fstr[len] = fmt.fill;
+					len++;
 				}
 			}
 
-			if ((fmt.fs & FMT_NULL_TERM_MASK) == FMT_NULL_TERM)
+			if ((fmt.flags & ITOA_NULL_TERM_NONE) == 0)
 			{
 				fstr[len] = '\0';
 			}
